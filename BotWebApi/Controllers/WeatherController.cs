@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Web.Http;
 using System.Web.Http.Results;
@@ -29,7 +30,7 @@ namespace BotWebApi.Controllers
         }
 
         [System.Web.Http.Route("api/weather/{name}")]
-        public JsonResult<WeatherState> Get(string name)
+        public IHttpActionResult Get(string name)
         {
             string url = string.Format(GetCurrentWeatherByNameUrlFormat, name);
             string response;
@@ -38,7 +39,16 @@ namespace BotWebApi.Controllers
                 response = client.GetStringAsync(url).Result;
             }
 
-            return Json(WeatherState.FromJson(response), new JsonSerializerSettings(), Encoding.Unicode);
+            var statusCode = (int)JsonConvert.DeserializeObject<dynamic>(response).cod;
+            if (statusCode == (int)HttpStatusCode.OK)
+            {
+
+                return Json(WeatherState.FromJson(response), new JsonSerializerSettings(), Encoding.Unicode);
+            }
+            else
+            {
+                return StatusCode((HttpStatusCode)statusCode);
+            }
         }
     }
 }
